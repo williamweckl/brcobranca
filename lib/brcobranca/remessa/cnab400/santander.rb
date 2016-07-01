@@ -8,14 +8,19 @@ module Brcobranca
         attr_accessor :codigo_transmissao
 
         attr_accessor :codigo_carteira
+        attr_accessor :instrucao_cobranca
 
-        validates_presence_of :documento_cedente, :codigo_transmissao, :agencia, :conta_corrente, :digito_conta, message: 'não pode estar em branco.'
+        validates_presence_of :documento_cedente, :codigo_transmissao, :agencia,
+                              :conta_corrente, :digito_conta, :instrucao_cobranca,
+                              message: 'não pode estar em branco.'
         validates_length_of :documento_cedente, minimum: 11, maximum: 14, message: 'deve ter entre 11 e 14 dígitos.'
         validates_length_of :carteira, maximum: 3, message: 'deve ter no máximo 3 dígitos.'
         validates_length_of :codigo_transmissao, maximum: 20, message: 'deve ter no máximo 20 dígitos.'
+        validate :instrucao_cobranca_deve_ser_valida
 
         def initialize(campos = {})
-          campos = { aceite: 'N', carteira: '101', codigo_carteira: '5'}.merge!(campos)
+          campos = { aceite: 'N', carteira: '101',
+                     codigo_carteira: '5', instrucao_cobranca: '00'}.merge!(campos)
           super(campos)
         end
 
@@ -151,7 +156,7 @@ module Brcobranca
           # 06 = PROTESTAR (VIDE POSIÇÃO392/393)
           # 07 = NÃO PROTESTAR
           # 08 = NÃO COBRAR JUROS DE MORA
-          detalhe << '00'                                                   # Instrução para o título               9[02]
+          detalhe << instrucao_cobranca                                     # Instrução para o título               9[02]
           detalhe << '00'                                                   # Número de dias válidos para instrução 9[02]
           detalhe << pagamento.formata_valor_mora                           # valor mora ao dia                     9[13]
           detalhe << pagamento.formata_data_desconto                        # data limite para desconto             9[06]
@@ -207,6 +212,11 @@ module Brcobranca
           # ultimo digito da conta corrente
           # digito da conta corrente
           "#{conta_corrente[-1]}#{digito_conta}"
+        end
+
+        def instrucao_cobranca_deve_ser_valida
+          return if (1..8).include? instrucao_cobranca.to_i
+          errors.add(:instrucao_cobranca, 'inválida, deve ser um valor de 01 a 08.')
         end
       end
     end

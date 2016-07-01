@@ -75,6 +75,36 @@ RSpec.describe Brcobranca::Remessa::Cnab400::Santander do
         expect(santander.errors.full_messages).to include('Codigo transmissao deve ter no máximo 20 dígitos.')
       end
     end
+
+    context '@instrucao_cobranca' do
+      it 'deve ser invalido se nao possuir uma instrucao de cobranca' do
+        object = subject.class.new(params.merge!(instrucao_cobranca: nil))
+        expect(object.invalid?).to be true
+        expect(object.errors.full_messages).to include('Instrucao cobranca não pode estar em branco.')
+      end
+
+      it 'deve ser valido' do
+        santander.instrucao_cobranca = '123'
+        expect(santander.invalid?).to be true
+        expect(santander.errors.full_messages).to include('Instrucao cobranca inválida, deve ser um valor de 01 a 08.')
+
+        santander.instrucao_cobranca = '00'
+        expect(santander.invalid?).to be true
+        expect(santander.errors.full_messages).to include('Instrucao cobranca inválida, deve ser um valor de 01 a 08.')
+
+        santander.instrucao_cobranca = '09'
+        expect(santander.invalid?).to be true
+        expect(santander.errors.full_messages).to include('Instrucao cobranca inválida, deve ser um valor de 01 a 08.')
+
+        santander.instrucao_cobranca = '01'
+        expect(santander.invalid?).to be false
+        expect(santander.errors.full_messages).to_not include('Instrucao cobranca inválida, deve ser um valor de 01 a 08.')
+
+        santander.instrucao_cobranca = '08'
+        expect(santander.invalid?).to be false
+        expect(santander.errors.full_messages).to_not include('Instrucao cobranca inválida, deve ser um valor de 01 a 08.')
+      end
+    end
   end
 
   context 'formatacoes dos valores' do
